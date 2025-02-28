@@ -5,6 +5,7 @@ export const config = {
             imagekitUrl: process.env.NEXT_PUBLIC_IMAGEKIT_URL,
             privatekey: process.env.IMAGEKIT_PRIVATE_KEY
         },
-        databaseUrl: process.env.DATABASE_URL
+        databaseUrl: process.env.DATABASE_URL,
+        prodApiEndpoint: process.env.NEXT_PUBLIC_PROD_API_ENDPOINT!
     }
 }

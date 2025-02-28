@@ -9,6 +9,7 @@ import { headers } from "next/headers"
 import { signIn, signOut } from "@/auth";
 import { redirect } from "next/navigation";
 import ratelimit from "@/lib/ratelimit"
+import { sendEmail, workflowClient } from "@/lib/workflow"
 
 interface FormData {
     fullName: string
@@ -46,44 +47,62 @@ export const signInWithCredentials = async (
   };
   
 
-export const signUp = async (params: FormData) => {
-    const { fullName, email, password } = params
-
+  export const signUp = async (data: { 
+    fullName: string; 
+    email: string; 
+    password: string 
+  }) => {
+    const { fullName, email, password } = data;
+  
     // ratelimit
     const ip = (await headers()).get("x-forwarded-for") || "127.0.0.1"
     const { success } = await ratelimit.limit(ip)
-
+  
     if (!success) return redirect("/to-fast")
-
+  
     const existingUser = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1)
-
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1)
+  
     if (existingUser.length > 0) {
-        throw new Error("User already exists")
+      throw new Error("User already exists")
     }
-
+  
     const hashedPassword = await bcrypt.hash(password, 10)
-
+  
     try {
-        await db.insert(users).values({
-            fullName,
-            email,
-            password: hashedPassword
-        })
+      await db.insert(users).values({
+        fullName,
+        email,
+        password: hashedPassword
+      })
+  
+      await workflowClient.trigger({
+        url: `${process.env.PROD_API_ENDPOINT}/api/workflows/onboarding`,
+        body: {
+          email,
+          fullName,
+        },
+      });
 
-        await signInWithCredentials({ email, password })
-
-        return { success: true }
-
+      await signInWithCredentials({ email, password })
+  
+       // Send welcome email
+       await sendEmail({
+        email,
+        subject: "Welcome to Bookify!",
+        message: `<p>Hi ${fullName}, welcome to our platform. Your account is pending approval.</p>`,
+      });
+  
+      return { success: true }
+  
     } catch (error) {
-        console.log(error, "Sign Up Error")
-        return { success: false, error: "Sign Up Error" }
+      console.log(error, "Sign Up Error")
+      return { success: false, error: "Sign Up Error" }
     }
-
-}
+  }
 
 export const logoutAction = async () => {
     await signOut();
