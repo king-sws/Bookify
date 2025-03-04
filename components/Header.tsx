@@ -28,21 +28,10 @@ const Header = ({session}: {session: Session}) => {
         <header className="my-10 flex justify-between gap-5">
             <Link href="/" className="flex items-center gap-2">
                 <Image src="/icons/logo.svg" alt="logo" width={40} height={40} />
-                <span className="font-medium">Bookify</span>
+                <span className="font-medium text-light-200 text-2xl ">Bookify</span>
             </Link>
             
             <ul className="flex items-center justify-center gap-8">
-                <li>
-                    <Link 
-                        href="/library" 
-                        className={cn(
-                            "text-base cursor-pointer capitalize", 
-                            pathname === "/library" ? "text-light-200" : "text-light-100"
-                        )}
-                    >
-                        Library
-                    </Link>
-                </li>
                 <li>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -54,7 +43,7 @@ const Header = ({session}: {session: Session}) => {
                                 </Avatar>
                             </button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuContent align="end" className="w-56 ">
                             <DropdownMenuLabel>My Account</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>

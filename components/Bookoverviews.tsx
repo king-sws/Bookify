@@ -2,34 +2,56 @@ import Image from 'next/image'
 import React from 'react'
 import { Button } from './ui/button'
 import BookCover from './BookCover'
+import BorrowBook from './BorrowBook'
+import { db } from '@/database/drizzle'
+import { users } from '@/database/schema'
+import { eq } from 'drizzle-orm'
 
 interface BookoverviewsProps {
-    id: number,
+    id: string,
     title: string,
     author: string,
     genre: string,
     rating: number,
-    total_copies: number,
-    available_copies: number,
+    totalCopies: number,
+    availableCopies: number,
     description: string,
-    color: string,
-    cover: string,
+    coverColor: string,
+    coverUrl: string,
+    userId: string ,
     video: string,
     summary: string,
     isLoanedBook?: boolean
 }
 
-const Bookoverviews = ({
+const Bookoverviews = async ({
     title, 
     author, 
     genre, 
     rating, 
-    total_copies, 
-    available_copies, 
+    totalCopies,
+    availableCopies, 
     description, 
-    color, 
-    cover  
+    coverUrl,
+    coverColor,
+    id,
+    userId
 } : BookoverviewsProps) => {
+
+  const [user] = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1)
+
+    if (!user) return null
+
+    const borrorwingEligility = {
+      isEligible: availableCopies > 0 && user.status === "APPROVED",
+      message: 
+        availableCopies <= 0 ? "Book is not available" : "You are not eligible to borrow this book"
+    }
+
   return (
     <section className="book-overview">
       <div className="flex flex-1 flex-col gap-5">
@@ -53,20 +75,19 @@ const Bookoverviews = ({
 
         <div className="book-copies">
           <p>
-            Total Books <span>{total_copies}</span>
+            Total Books <span>{totalCopies}</span>
           </p>
 
           <p>
-            Available Books <span>{available_copies} </span>
+            Available Books <span>{availableCopies} </span>
           </p>
         </div>
 
         <p className="book-description">{description}</p>
 
-        <Button className="book-overview_btn">
-          <Image src="/icons/book.svg" alt="download" width={22} height={22} />
-          <p>Borrow</p>
-        </Button>
+        {user && (
+          <BorrowBook bookId={id} userId={userId} borrorwingEligility={borrorwingEligility} />
+        ) }
       </div>
 
       <div className="relative flex flex-1 justify-center">
@@ -74,15 +95,15 @@ const Bookoverviews = ({
           <BookCover
             variant="wide"
             className="z-10"
-            covercolor={color}
-            cover={cover}
+            coverColor={coverColor}
+            coverUrl={coverUrl}
           />
 
           <div className="absolute left-16 top-10 rotate-12 opacity-40 max-sm:hidden">
             <BookCover
               variant="wide"
-              covercolor={color}
-              cover={cover}
+              coverColor={coverColor}
+              coverUrl={coverUrl}
             />
           </div>
         </div>
